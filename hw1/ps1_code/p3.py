@@ -131,7 +131,9 @@ def compute_rotation_matrix_between_cameras(vanishing_points1, vanishing_points2
     #TODO: Fill in this code
     """
     算法：
-    1) 设d1, d2分别是相机1, 2拍摄的同一平行线的法向量，则有d2 = Rd1
+    1) 设d1, d2分别是相机1, 2拍摄的同一平行线的3D方向向量，则有d2 = Rd1
+       因为有p = K[R T]P，因此可知旋转矩阵的定义是P' = RP（P为3D），即在
+       旋转后的相机看来，世界中的每个点都做了变换R
     2) R [d1(0), d1(1), ..., d1(n-1)] = [d2(0), d2(1), ..., d2(n-1)]
        | d2(0).T   |     | d1(0).T   |
        | d2(1).T   | =   | d1(1).T   | R.T
