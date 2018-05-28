@@ -106,7 +106,16 @@ Returns:
 '''
 def compute_angle_between_planes(vanishing_pair1, vanishing_pair2, K):
     #TODO: Fill in this code
-    pass
+    P0, P1 = vanishing_pair1
+    P2, P3 = vanishing_pair2
+    K_inv = np.linalg.inv(K)
+    d0, d1 = np.dot(K_inv, P0), np.dot(K_inv, P1)
+    d2, d3 = np.dot(K_inv, P2), np.dot(K_inv, P3)
+    n1 = np.cross(d0, d1)
+    n2 = np.cross(d2, d3)
+    cos = np.dot(n1, n2) / (np.sum(n1 ** 2) * np.sum(n2 ** 2)) ** 0.5
+    angle = math.acos(cos) * 180 / math.pi
+    return angle
 
 '''
 COMPUTE_K_FROM_VANISHING_POINTS
@@ -120,7 +129,20 @@ Returns:
 '''
 def compute_rotation_matrix_between_cameras(vanishing_points1, vanishing_points2, K):
     #TODO: Fill in this code
-    pass
+    """
+    算法：
+    1) 设d1, d2分别是相机1, 2拍摄的同一平行线的法向量，则有d2 = Rd1
+    2) R [d1(0), d1(1), ..., d1(n-1)] = [d2(0), d2(1), ..., d2(n-1)]
+       | d2(0).T   |     | d1(0).T   |
+       | d2(1).T   | =   | d1(1).T   | R.T
+       | ...       |     | ...       |
+       | d2(n-1).T |     | d1(n-1).T |
+    """
+    K_inv = np.linalg.inv(K)
+    A = np.dot(K_inv, vanishing_points1.T)
+    B = np.dot(K_inv, vanishing_points2.T)
+    R = np.linalg.lstsq(A.T, B.T)[0].T
+    return R
 
 if __name__ == '__main__':
     # Part A: Compute vanishing points
@@ -139,8 +161,6 @@ if __name__ == '__main__':
     K_actual = np.array([[2448.0, 0, 1253.0],[0, 2438.0, 986.0],[0,0,1.0]])
     print()
     print("Actual Matrix:\n", K_actual)
-
-    input()
 
     # Part D: Estimate the angle between the box and floor
     floor_vanishing1 = v1
