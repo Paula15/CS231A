@@ -28,7 +28,30 @@ Returns:
 '''
 def compute_camera_matrix(real_XY, front_image, back_image):
     # TODO: Fill in this code
-    pass
+    n = len(real_XY)
+    A = np.zeros([2 * n, 4])
+    bx = np.zeros([2 * n])
+    by = np.zeros([2 * n])
+
+    for i in range(n):
+        X, Y = real_XY[i]
+        A[i] = [X, Y, 0, 1]
+        bx[i] = front_image[i][0]
+        by[i] = front_image[i][1]
+    for i in range(n):
+        X, Y = real_XY[i]
+        A[i + n] = [X, Y, 150, 1]
+        bx[i + n] = back_image[i][0]
+        by[i + n] = back_image[i][1]
+
+    mx, res_x, rank_x, s_x = np.linalg.lstsq(A, bx)
+    my, res_y, rank_y, s_y = np.linalg.lstsq(A, by)
+
+    M = np.zeros([3, 4])
+    M[0] = mx
+    M[1] = my
+    M[2] = [0, 0, 0, 1]
+    return M
 
 '''
 RMS_ERROR
@@ -43,13 +66,23 @@ Returns:
 '''
 def rms_error(camera_matrix, real_XY, front_image, back_image):
     #TODO: Fill in this code
-    pass
+    n = len(real_XY)
+    XYZ1_0 = np.r_[real_XY.T, np.zeros((1, n)), np.ones((1, n))]
+    XYZ1_150 = np.r_[real_XY.T, np.ones((1, n)) * 150, np.ones((1, n))]
+    xy1_0 = np.matmul(camera_matrix, XYZ1_0)[:2, :].T
+    xy1_150 = np.matmul(camera_matrix, XYZ1_150)[:2, :].T
+    err = 0.0
+    err += np.sum((front_image - xy1_0) ** 2)
+    err += np.sum((back_image - xy1_150) ** 2)
+    err = np.sqrt(err / float(n))
+    return err
+
 
 if __name__ == '__main__':
     # Loading the example coordinates setup
-    real_XY = np.load('real_XY.npy')
-    front_image = np.load('front_image.npy')
-    back_image = np.load('back_image.npy')
+    real_XY = np.load('npy/real_XY.npy')
+    front_image = np.load('npy/front_image.npy')
+    back_image = np.load('npy/back_image.npy')
 
     camera_matrix = compute_camera_matrix(real_XY, front_image, back_image)
     print("Camera Matrix:\n", camera_matrix)

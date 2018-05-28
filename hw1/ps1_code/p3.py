@@ -16,7 +16,13 @@ Returns:
 '''
 def compute_vanishing_point(points):
     #TODO: Fill in this code
-    pass
+    points = np.c_[points, np.ones((4, 1))] # 转化为齐次坐标
+    P0, P1, P2, P3 = points
+    n1 = np.cross(P0, P1)   # 第一条直线的法向量
+    n2 = np.cross(P2, P3)   # 第二条直线的法向量
+    V = np.cross(n1, n2)    # 两条直线的交点
+    V /= V[2]               # 将齐次坐标的最后一维归一
+    return V
 
 '''
 COMPUTE_K_FROM_VANISHING_POINTS
@@ -28,7 +34,65 @@ Returns:
 '''
 def compute_K_from_vanishing_points(vanishing_points):
     #TODO: Fill in this code
-    pass
+    """
+    算法：
+    设V1, V2, V3是3对相互垂直的平行线（方向d1, d2, d3）的3个消失点，则有：
+    1) Vi = Kdi，K为待求的相机矩阵
+    2) Vi.T W Vj = 0, i != j。其中W = (KK.T)^-1（因为di dj = 0）
+    3) 假设方像素、无扭曲，则相机矩阵K有3个自由度，满足形式
+        K = | α  0  cx |
+            | 0  α  cy |
+            | 0  0  1  |
+       从而W = (KK.T)^-1满足形式
+        W = | w1 0  w4 |
+            | 0  w1 w5 |
+            | w4 w5 w6 |
+       其中w1, w4, w6待求，根据2)的3个约束条件确定
+    4) 推导vi.T W Vj = 0的方程形式：
+        Vi = [a, b, 1]
+        Vj = [x, y, 1]
+       有Vi.T W Vj = [xa + yb, x + a, y + b, 1] | w1 |
+                                                | w4 |
+                                                | w5 |
+                                                | w6 |
+       将i, j从0~2循环，可得3个方程，最终得到方程组
+       A(3, 4) w(4, 1) = 0(3, 1)
+    5) 此时方程个数多于未知数个数。
+       解1：
+           实际上，容易发现必有w6 = 1，因为本来K就只有3个自由度，
+           从而可以直接给A加一个条件，令w6 = 1；
+       解2：
+           设A(3, 4)的奇异值分解为
+            A = [u1, u2, u3] | a        0 | | v1.T |
+                             |    b     0 | | v2.T |
+                             |       c  0 | | v3.T |
+                                            | v4.T |
+           由于(v1, v2, v3, v4)正交，故
+           有Av4  = [u1, u2, u3] | a        0 | | 0 | = 0
+                                 |    b     0 | | 0 |
+                                 |       c  0 | | 0 |
+                                                | 1 |
+           所以可取v4为一个解。
+           （查了github上2份答案都这么做的，但并不明白原理……）
+    6) 根据W，使用Cholesky分解求得K = cholesky(W^-1)即可
+    """
+    A = np.zeros([4, 4])
+    for row, (i, j) in enumerate([(0, 1), (0, 2), (1, 2)]):
+        Pi = vanishing_points[i] / vanishing_points[i][2]
+        Pj = vanishing_points[j] / vanishing_points[i][2]
+        a, b, _ = Pi
+        x, y, _ = Pj
+        A[row] = [x*a + y*b, x + a, y + b, 1.]
+    # 限制w6 = 1
+    A[3] = [0., 0., 0., 1.]     
+    w1, w4, w5, w6 = np.linalg.solve(A, [0., 0., 0., 1.])
+    W = np.array([[w1, 0., w4],
+                  [0., w1, w5],
+                  [w4, w5, w6]])
+    # 注意：必须先Cholesky分解再求逆，否则结果相差巨大
+    K = np.linalg.cholesky(W)   
+    K = np.linalg.inv(K).T  
+    return K
 
 '''
 COMPUTE_K_FROM_VANISHING_POINTS
@@ -75,6 +139,8 @@ if __name__ == '__main__':
     K_actual = np.array([[2448.0, 0, 1253.0],[0, 2438.0, 986.0],[0,0,1.0]])
     print()
     print("Actual Matrix:\n", K_actual)
+
+    input()
 
     # Part D: Estimate the angle between the box and floor
     floor_vanishing1 = v1
