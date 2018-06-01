@@ -26,7 +26,7 @@ class CoordinatePrinter:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Get the pixel location in'
             ' an image')
-    parser.add_argument('filepath', type=str, nargs='?', default='front.png',
+    parser.add_argument('filepath', type=str, nargs='?', default='images/front.png',
             help='The path to the image')
     parser.add_argument('-resize-val', type=int, default=2,
             help='How much to resize the image')
