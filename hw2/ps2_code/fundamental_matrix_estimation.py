@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.misc import imread
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import scipy.io as sio
 from epipolar_utils import *
 
@@ -102,7 +103,7 @@ def plot_epipolar_lines_on_images(points1, points2, im1, im2, F):
             plt.axes(ax)
             ax.set_xlim([0, im.shape[1]])
             ax.set_ylim([im.shape[0], 0])
-            plt.imshow(im, cmap='gray', interpolation='bicubic')
+            plt.imshow(im, cmap='gray', interpolation='bicubic', aspect='auto')
         return fig, axs
 
     def plot(ax, p, line):
